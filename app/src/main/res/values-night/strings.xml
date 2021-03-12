@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="recall_edit_text_hint">Время для перезванивания</string>
+    <string name="drop_edit_text_hint">Время для сброса</string>
+    <string name="drop_text">Введите время для сброса:</string>
+    <string name="recall_text">Введите время для перезванивания:</string>
+    <string name="start_btn_text">Начать</string>
+</resources>
