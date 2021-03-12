@@ -1,5 +1,6 @@
 package com.example.phonecalllooper
 
+import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -14,7 +15,7 @@ import androidx.core.content.ContextCompat
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 
-class PhoneStateChangedReceiver(val dropSec:Long, var numList: ArrayList<String>) : BroadcastReceiver() {
+class PhoneStateChangedReceiver(val dropSec:Long, var numList: MutableList<String>) : BroadcastReceiver() {
     var prev_state = -2288
 
     var numIterator = 0
@@ -88,6 +89,7 @@ class PhoneStateChangedReceiver(val dropSec:Long, var numList: ArrayList<String>
         } else Log.d("tut", "налл в контексте")
     }
 
+    @SuppressLint("MissingPermission")
     fun disableRingingPhone(context: Context?):Boolean {
         Log.d("tut","disable")
         val telephonyManager = context?.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager

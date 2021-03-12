@@ -7,4 +7,5 @@
     <string name="start_btn_text">Начать</string>
     <string name="stop_btn_text">Прекратить работу</string>
     <string name="OK">Ок</string>
+    <string name="enter_number_setter">Введите номер настройщика</string>
 </resources>
