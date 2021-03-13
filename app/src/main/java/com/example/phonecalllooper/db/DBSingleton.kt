@@ -10,7 +10,6 @@ object DBSingleton {
         if (db == null){
             db = Room.databaseBuilder(context,NumbersDatabase::class.java,"database").build()
         }
-        Log.d("tut", (db==null).toString())
         return db!!.dao
     }
 }

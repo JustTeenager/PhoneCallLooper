@@ -24,6 +24,7 @@ import com.example.phonecalllooper.db.CallNumber
 import com.example.phonecalllooper.db.DBSingleton
 import io.reactivex.Flowable
 import io.reactivex.Observable
+import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.observers.DisposableObserver
 import io.reactivex.schedulers.Schedulers
 import java.lang.reflect.InvocationTargetException
@@ -42,23 +43,9 @@ class MainActivity : AppCompatActivity(),SMSReceiver.Callback {
 
     private val binding:ActivityMainBinding by lazy{DataBindingUtil.setContentView(this, R.layout.activity_main)}
 
-    private val observerForLoopCalls = object: DisposableObserver<Long>() {
-        var count = 0
-        override fun onNext(t: Long) {
-            callToNum(numsList[count])
-            if (count< numsList.size)
-                count++
-            else count = 0
-        }
+    private val disposables:CompositeDisposable=CompositeDisposable()
 
-        override fun onError(e: Throwable) {
 
-        }
-
-        override fun onComplete() {
-
-        }
-    }
 
 
     @SuppressLint("CheckResult")
@@ -91,17 +78,26 @@ class MainActivity : AppCompatActivity(),SMSReceiver.Callback {
             binding.dropSec.isEnabled = false
             binding.startBtn.isEnabled = false
             binding.changeNum.isEnabled = false
+            binding.checkNumbers.isEnabled=false
             binding.stopBtn.isEnabled = true
+
            // registerReceiver(phoneStateChangedReceiver, filterRingtones)
-            createLoopCalls()
+            if (binding.dropSec.text.isEmpty())
+            createLoopCalls( MySharedPreferences.readPeriodDisable(this))
+            else {
+                createLoopCalls(binding.dropSec.text.toString().toLong())
+                MySharedPreferences.writePeriodDisable(this,binding.dropSec.text.toString().toLong())
+            }
            // callToNum(this, numsList[0])
         }
+
         binding.stopBtn.setOnClickListener {
             binding.dropSec.isEnabled = true
             binding.startBtn.isEnabled = true
             binding.changeNum.isEnabled = true
+            binding.checkNumbers.isEnabled=true
             binding.stopBtn.isEnabled = false
-            observerForLoopCalls.dispose()
+            disposables.dispose()
            // unregisterReceiver(phoneStateChangedReceiver)
         }
         binding.changeNum.setOnClickListener {
@@ -148,10 +144,10 @@ class MainActivity : AppCompatActivity(),SMSReceiver.Callback {
 
     override fun setupCallLoop(originatingAddress: String?, messageBody: String) {
         if (originatingAddress!=MySharedPreferences.readManagerNumber(this)) return
-
+        if (disposables.isDisposed) disposables.dispose()
+        //disableRingingPhone()
         //unregisterReceiver(phoneStateChangedReceiver)
         //db.dao.deleteNumbers()
-        DBSingleton.createDao(this).deleteNumbers()
         numsList.clear()
 
         val observable:Observable<String> =
@@ -163,6 +159,7 @@ class MainActivity : AppCompatActivity(),SMSReceiver.Callback {
             override fun onNext(t: String) {
                 if (flagFirstString){
                     flagFirstString=false
+                    DBSingleton.createDao(this@MainActivity).deleteNumbers()
                     MySharedPreferences.writePeriodDisable(this@MainActivity, t.toLong())
                 }
                 else{
@@ -181,24 +178,53 @@ class MainActivity : AppCompatActivity(),SMSReceiver.Callback {
                 //TODO: раскомментить звонок
                 //registerReceiver(phoneStateChangedReceiver, filterRingtones)
                 //callToNum(this,numsList[0])
-                createLoopCalls()
+                createLoopCalls(MySharedPreferences.readPeriodDisable(this@MainActivity))
             }
         }
         observable.subscribe(observer)
-
-
     }
 
     @SuppressLint("CheckResult")
-    private fun createLoopCalls(){
-        //TODO: в период  и делай вставить данные из sharedPreferences
-        val period = MySharedPreferences.readPeriodDisable(this)
-        val observable:Observable<Long> = Observable.interval(2,period+5,TimeUnit.SECONDS).subscribeOn(Schedulers.io())
-        observable.subscribe(observerForLoopCalls)
-        observable.delay(period,TimeUnit.SECONDS)
-                .subscribe {
-                    disableRingingPhone()
+    private fun createLoopCalls(period:Long){
+        val observerForLoopCalls = object: DisposableObserver<Long>() {
+            var count = 0
+            override fun onNext(t: Long) {
+                Log.d("tut_count",count.toString())
+                Log.d("tut_call",t.toString())
+                if (!isDisposed) {
+                    callToNum(numsList[count])
+                    if (count < numsList.size - 1)
+                        count++
+                    else count = 0
                 }
+            }
+
+            override fun onError(e: Throwable) {
+
+            }
+
+            override fun onComplete() {
+
+            }
+        }
+        val observerForCallDisable= object: DisposableObserver<Long>(){
+            override fun onNext(t: Long) {
+                Log.d("tut_delay",t.toString())
+                disableRingingPhone()
+            }
+
+            override fun onError(e: Throwable) {
+            }
+
+            override fun onComplete() {
+            }
+
+        }
+        //TODO: в период  и делай вставить данные из sharedPreferences
+        val observable:Observable<Long> = Observable.interval(2,period+8,TimeUnit.SECONDS).subscribeOn(Schedulers.io())
+        observable.subscribe(observerForLoopCalls)
+        observable.delay(period,TimeUnit.SECONDS).subscribe(observerForCallDisable)
+        disposables.addAll(observerForLoopCalls,observerForCallDisable)
     }
 
     private fun callToNum(phoneNum: String) {
@@ -251,7 +277,7 @@ class MainActivity : AppCompatActivity(),SMSReceiver.Callback {
 
     override fun onDestroy() {
         super.onDestroy()
-        observerForLoopCalls.dispose()
+        disposables.dispose()
         //unregisterReceiver(phoneStateChangedReceiver)
     }
 }
