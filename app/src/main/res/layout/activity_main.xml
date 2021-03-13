@@ -5,13 +5,13 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center|top"
-        android:padding="8dp"
+        android:padding="@dimen/padding"
         android:orientation="vertical">
 
         <TextView
             android:text="@string/drop_text"
             android:textStyle="bold"
-            android:textSize="25sp"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Headline5"
             android:layout_gravity="start"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
@@ -25,14 +25,14 @@
 
 
         <Button
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="@dimen/margin_top"
             android:id="@+id/start_btn"
             android:text="@string/start_btn_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
         <Button
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="@dimen/margin_top"
             android:id="@+id/stop_btn"
             android:text="@string/stop_btn_text"
             android:layout_width="wrap_content"
@@ -40,8 +40,15 @@
 
         <Button
             android:id="@+id/change_num"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="@dimen/margin_top"
             android:text="@string/settings_num_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:id="@+id/check_numbers"
+            android:layout_marginTop="@dimen/margin_top"
+            android:text="@string/check_list_numbers"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
     </LinearLayout>
