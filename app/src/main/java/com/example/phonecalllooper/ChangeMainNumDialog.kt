@@ -24,8 +24,6 @@ class ChangeMainNumDialog : DialogFragment() {
                                    binding.changeNumEditText.text.toString()
                                )
                            }
-
-
                         dismiss()
                     }
                 }).setTitle(R.string.settings_num_text).setView(binding.root).create()

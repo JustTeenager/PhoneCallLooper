@@ -41,7 +41,7 @@
         <Button
             android:id="@+id/change_num"
             android:layout_marginTop="@dimen/margin_top"
-            android:text="@string/settings_num_text"
+            android:text="@string/settings_num_btn_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 

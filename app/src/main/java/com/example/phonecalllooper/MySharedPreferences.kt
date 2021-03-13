@@ -23,7 +23,7 @@ class MySharedPreferences {
 
         fun readPeriodDisable(context: Context):Long{
             return context.getSharedPreferences(SHARED_KEY, Context.MODE_PRIVATE).getLong(
-                    PERIOD_DISABLE_KEY,10
+                    PERIOD_DISABLE_KEY,0
             )
         }
 
