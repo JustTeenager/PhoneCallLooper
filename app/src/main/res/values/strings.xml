@@ -8,4 +8,5 @@
     <string name="stop_btn_text">Прекратить работу</string>
     <string name="OK">Ок</string>
     <string name="enter_number_setter">Введите номер настройщика</string>
+    <string name="check_list_numbers">Посмотреть список номеров</string>
 </resources>

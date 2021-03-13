@@ -28,6 +28,8 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".NumbersActivity"
+            android:parentActivityName=".MainActivity"/>
         <!--<receiver android:name=".PhoneStateChangedReceiver" >
             <intent-filter>
                 <action android:name="android.intent.action.PHONE_STATE" />

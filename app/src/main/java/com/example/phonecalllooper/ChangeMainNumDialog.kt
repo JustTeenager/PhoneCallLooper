@@ -13,13 +13,13 @@ import com.example.phonecalllooper.databinding.DialogChangeMainNumBinding
 class ChangeMainNumDialog : DialogFragment() {
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val binding:DialogChangeMainNumBinding=DataBindingUtil.inflate(LayoutInflater.from(context),R.layout.dialog_change_main_num,null,false)
-        binding.changeNumEditText.setText(context?.let { MySharedPreferences.readData(it) })
+        binding.changeNumEditText.setText(context?.let { MySharedPreferences.readManagerNumber(it) })
         val builder:AlertDialog.Builder=AlertDialog.Builder(context)
                 return builder.setPositiveButton(R.string.OK,object: DialogInterface.OnClickListener{
                     override fun onClick(dialog: DialogInterface?, which: Int) {
                            Log.d("tut_dialog", binding.changeNumEditText.text.toString())
                            context?.let {
-                               MySharedPreferences.writeData(
+                               MySharedPreferences.writeManagerNumber(
                                    it,
                                    binding.changeNumEditText.text.toString()
                                )
