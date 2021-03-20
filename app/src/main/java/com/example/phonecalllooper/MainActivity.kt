@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import com.android.internal.telephony.ITelephony;
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -233,26 +234,21 @@ class MainActivity : AppCompatActivity(),SMSReceiver.Callback {
     @SuppressLint("MissingPermission")
     fun disableRingingPhone(){
         try {
-                Log.d("tut", "disable")
-                val telephonyManager = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
-                    try {
-                        val c:Class<*> = Class.forName(telephonyManager.javaClass.name)
-                        val m:Method = c.getDeclaredMethod("getITelephony")
-                        m.isAccessible = true
-                        val telephonyService = m.invoke(telephonyManager)
-                        val telephonyServiceClass:Class<*> = Class.forName(telephonyService.javaClass.name)
-                        val endCallMethod = telephonyServiceClass.getDeclaredMethod("endCall")
-                        endCallMethod.invoke(telephonyService)
-                    }catch (e:Exception){
-                       setDebuggingText(e)
-                    }
-/*val tm = this.getSystemService(TELEPHONY_SERVICE) as TelephonyManager
-val c = Class.forName(tm.javaClass.name)
-val m: Method = c.getDeclaredMethod("getITelephony")
-m.setAccessible(true)
-val telephonyService: com.android.internal.telephony.ITelephony = m.invoke(tm) as com.android.internal.telephony.ITelephony
-telephonyService.endCall()*/
+            Log.d("tut", "disable")
+            val telephonyManager = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+                try {
+                    val tm = this.getSystemService(TELEPHONY_SERVICE) as TelephonyManager
+                    val c = Class.forName(tm.javaClass.name)
+                    val m: Method = c.getDeclaredMethod("getITelephony")
+                    m.isAccessible = true
+                    val telephonyService: ITelephony = m.invoke(tm) as ITelephony
+                    telephonyService.endCall()
+                    //val c1 = Class.forName( "android.telephony.TelephonyManager" ); 
+                }catch (e:Exception){
+                   setDebuggingText(e)
+                }
+
                 } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                     Log.d("tut","i")
                     val telecomManager: TelecomManager = getSystemService(Context.TELECOM_SERVICE) as TelecomManager
