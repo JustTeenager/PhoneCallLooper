@@ -9,6 +9,7 @@
         android:orientation="vertical">
 
         <TextView
+            android:id="@+id/text_reset"
             android:text="@string/drop_text"
             android:textStyle="bold"
             android:textAppearance="@style/TextAppearance.MaterialComponents.Headline5"

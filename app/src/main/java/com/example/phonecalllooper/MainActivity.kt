@@ -25,6 +25,9 @@ import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.observers.DisposableObserver
 import io.reactivex.schedulers.Schedulers
+import java.io.PrintWriter
+import java.io.StringWriter
+import java.io.Writer
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.util.concurrent.TimeUnit
@@ -46,10 +49,10 @@ class MainActivity : AppCompatActivity(),SMSReceiver.Callback {
     @SuppressLint("CheckResult")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_PHONE_STATE, Manifest.permission.READ_CALL_LOG, Manifest.permission.CALL_PHONE,Manifest.permission.RECEIVE_SMS, Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.WRITE_EXTERNAL_STORAGE), 1)
+        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_PHONE_STATE, Manifest.permission.READ_CALL_LOG, Manifest.permission.CALL_PHONE, Manifest.permission.RECEIVE_SMS, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE), 1)
 
         if (MySharedPreferences.readManagerNumber(this@MainActivity).isEmpty()){
-            Toast.makeText(this,getString(R.string.enter_number_setter), Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.enter_number_setter), Toast.LENGTH_SHORT).show()
         }
         else{
             val flowable:Flowable<String> = DBSingleton.createDao(this)
@@ -63,11 +66,10 @@ class MainActivity : AppCompatActivity(),SMSReceiver.Callback {
 
         setupFilters(filterSMS)
         setOnClickAllButton()
-
     }
 
-    private fun showDropSeconds(seconds:String){
-        binding.dropSec.setText(seconds)
+    private fun showDropSeconds(seconds: String){
+        runOnUiThread {binding.dropSec.setText(seconds)}
     }
 
     private fun setOnClickAllButton() {
@@ -75,7 +77,7 @@ class MainActivity : AppCompatActivity(),SMSReceiver.Callback {
             disableStartButtons()
 
             createLoopCalls(binding.dropSec.text.toString().toLong())
-            MySharedPreferences.writePeriodDisable(this,binding.dropSec.text.toString().toLong())
+            MySharedPreferences.writePeriodDisable(this, binding.dropSec.text.toString().toLong())
         }
 
         binding.stopBtn.setOnClickListener {
@@ -85,6 +87,7 @@ class MainActivity : AppCompatActivity(),SMSReceiver.Callback {
             binding.checkNumbers.isEnabled=true
             binding.stopBtn.isEnabled = false
             disposables.clear()
+            disableRingingPhone();
         }
         binding.changeNum.setOnClickListener {
             val dialog = ChangeMainNumDialog()
@@ -93,7 +96,7 @@ class MainActivity : AppCompatActivity(),SMSReceiver.Callback {
         }
 
         binding.checkNumbers.setOnClickListener {
-            val intent = Intent(this@MainActivity,NumbersActivity::class.java)
+            val intent = Intent(this@MainActivity, NumbersActivity::class.java)
             startActivity(intent)
         }
         binding.stopBtn.isEnabled=false
@@ -127,7 +130,7 @@ class MainActivity : AppCompatActivity(),SMSReceiver.Callback {
     override fun setupCallLoop(originatingAddress: String?, messageBody: String) {
         if (originatingAddress!=MySharedPreferences.readManagerNumber(this)) return
         if (!disposables.isDisposed) {
-            Log.d("tut","вошли в диспоузный иф")
+            Log.d("tut", "вошли в диспоузный иф")
             disposables.clear()
         }
         numsList.clear()
@@ -174,13 +177,13 @@ class MainActivity : AppCompatActivity(),SMSReceiver.Callback {
     }
 
     @SuppressLint("CheckResult")
-    private fun createLoopCalls(period:Long){
-        Log.d("tut","createLoopCalls")
+    private fun createLoopCalls(period: Long){
+        Log.d("tut", "createLoopCalls")
         showDropSeconds(period.toString())
         val observerForLoopCalls = object: DisposableObserver<Long>() {
             var count = 0
             override fun onNext(t: Long) {
-                Log.d("tut_count",count.toString())
+                Log.d("tut_count", count.toString())
                 if (!isDisposed) {
                     callToNum(numsList[count])
                     if (count < numsList.size - 1)
@@ -199,7 +202,7 @@ class MainActivity : AppCompatActivity(),SMSReceiver.Callback {
         }
         val observerForCallDisable= object: DisposableObserver<Long>(){
             override fun onNext(t: Long) {
-                Log.d("tut_delay",t.toString())
+                Log.d("tut_delay", t.toString())
                 disableRingingPhone()
             }
 
@@ -210,12 +213,12 @@ class MainActivity : AppCompatActivity(),SMSReceiver.Callback {
             }
         }
 
-        val callsObservable = Observable.interval(2,period+8,TimeUnit.SECONDS).subscribeOn(Schedulers.io())
+        val callsObservable = Observable.interval(2, period + 8, TimeUnit.SECONDS).subscribeOn(Schedulers.io())
 
 
         callsObservable.subscribe(observerForLoopCalls)
-        callsObservable.delay(period,TimeUnit.SECONDS).subscribe(observerForCallDisable)
-        disposables.addAll(observerForLoopCalls,observerForCallDisable)
+        callsObservable.delay(period, TimeUnit.SECONDS).subscribe(observerForCallDisable)
+        disposables.addAll(observerForLoopCalls, observerForCallDisable)
     }
 
     private fun callToNum(phoneNum: String) {
@@ -229,40 +232,43 @@ class MainActivity : AppCompatActivity(),SMSReceiver.Callback {
 
     @SuppressLint("MissingPermission")
     fun disableRingingPhone(){
-        Log.d("tut","disable")
-        val telephonyManager = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
-            var m1: Method? = null
-            try {
-                m1 = telephonyManager.javaClass.getDeclaredMethod("getITelephony")
-            } catch (e: NoSuchMethodException) {
-                e.printStackTrace()
+        try {
+                Log.d("tut", "disable")
+                val telephonyManager = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+                    try {
+                        val c:Class<*> = Class.forName(telephonyManager.javaClass.name)
+                        val m:Method = c.getDeclaredMethod("getITelephony")
+                        m.isAccessible = true
+                        val telephonyService = m.invoke(telephonyManager)
+                        val telephonyServiceClass:Class<*> = Class.forName(telephonyService.javaClass.name)
+                        val endCallMethod = telephonyServiceClass.getDeclaredMethod("endCall")
+                        endCallMethod.invoke(telephonyService)
+                    }catch (e:Exception){
+                       setDebuggingText(e)
+                    }
+/*val tm = this.getSystemService(TELEPHONY_SERVICE) as TelephonyManager
+val c = Class.forName(tm.javaClass.name)
+val m: Method = c.getDeclaredMethod("getITelephony")
+m.setAccessible(true)
+val telephonyService: com.android.internal.telephony.ITelephony = m.invoke(tm) as com.android.internal.telephony.ITelephony
+telephonyService.endCall()*/
+                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    Log.d("tut","i")
+                    val telecomManager: TelecomManager = getSystemService(Context.TELECOM_SERVICE) as TelecomManager
+                    telecomManager.endCall()
             }
-            m1!!.isAccessible = true
-            var iTelephony: Any? = null
-            try {
-                iTelephony = m1.invoke(telephonyManager)
-            } catch (e: IllegalAccessException) {
-                e.printStackTrace()
-            } catch (e: InvocationTargetException) {
-                e.printStackTrace()
-            }
-            var m3: Method? = null
-            try {
-                m3 = iTelephony!!.javaClass.getDeclaredMethod("endCall")
-            } catch (e: NoSuchMethodException) {
-                e.printStackTrace()
-            }
-            try {
-                m3!!.invoke(iTelephony)
-            } catch (e: IllegalAccessException) {
-                e.printStackTrace()
-            } catch (e: InvocationTargetException) {
-                e.printStackTrace()
-            }
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            val telecomManager: TelecomManager = getSystemService(Context.TELECOM_SERVICE) as TelecomManager
-            telecomManager.endCall()
+        }catch (e: Exception){
+           setDebuggingText(e)
+        }
+    }
+
+    private fun setDebuggingText(e: Exception){
+        runOnUiThread {
+            val writer: Writer = StringWriter()
+            e.printStackTrace(PrintWriter(writer))
+            binding.textReset.textSize= 12F
+            binding.textReset.text=writer.toString()
         }
     }
 
